@@ -66,33 +66,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
-//    sdb->setDatabaseName("test");
-//    if (!sdb->open()) {
-//           //....
-//    }
-//    sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
-//    sdb->setDatabaseName("test");
-//    if (!sdb->open()) {
-//           //....
-//    }
-//    tbvCat = new QTableView();
-//    modelCat = new QSqlQueryModel();
-//    modelCat->setQuery("SELECT id, name "
-//    "FROM Сategories "
-//    );
-
-//    if (modelCat->lastError().isValid()) {
-//        qDebug() << modelCat->lastError();
-//    }
-
-//    ui->tbvCat->setModel(modelCat);
-//    ui->tbvCat->hideColumn(0);
-//    ui->tbvCat->show();
-
+        
     ui->listWidget->setViewMode(QListView::IconMode);
     ui->listWidget->setIconSize(QSize(160,160));
-
-
+        
+    ui->label->setScaledContents(true);
 
     connect(ui->btnNextPage,SIGNAL(clicked()),this,SLOT(next()));
     //connect(ui->pushButton_2, SIGNAL(clicked()), this, SLOT(copy()));
@@ -115,12 +93,7 @@ void MainWindow::next()
     document->nextPage();
     QImage *img = document->getImage();
     auto pixmap = QPixmap::fromImage(*img);
-
-    //int width = ui->label->width();
-    //int height = ui->label->height();
-    ui->label->setScaledContents(true);
-    ui->label->setPixmap(pixmap);//.scaled(width, height, Qt::KeepAspectRatio));
-
+    ui->label->setPixmap(pixmap);
 }
 
 void MainWindow::bookCoverClicked(QListWidgetItem *item)
@@ -131,11 +104,8 @@ void MainWindow::bookCoverClicked(QListWidgetItem *item)
     document->openDocument(pitem->getPath());
     currentBookPath = pitem->getPath();
     QImage *img = document->getImage();
-    //document->nextPage();
     auto pixmap = QPixmap::fromImage(*img);
-    int width = ui->label->width();
-    int height = ui->label->height();
-    ui->label->setPixmap(pixmap.scaled(width, height, Qt::KeepAspectRatio));
+    ui->label->setPixmap(pixmap);
 }
 
 void MainWindow::copy()
@@ -195,10 +165,6 @@ void MainWindow::setFolder()
     QStringList filesList = myDir.entryList(QStringList("*.djvu"));
     MyListWidgetItem* pitem;
 
-
-
-
-
     foreach(QString str, filesList) {
         document = new DJVU;
         document->openDocument(currentDir + "/" + str);
@@ -208,8 +174,7 @@ void MainWindow::setFolder()
         inBuffer.open( QIODevice::WriteOnly );
         auto p_map = QPixmap::fromImage(*img);
         p_map.save( &inBuffer, "PNG" );
-
-
+        
         pitem = new MyListWidgetItem(str.mid(0, 10), ui->listWidget);
 
         pitem->setIcon(QPixmap::fromImage(*img));
@@ -217,18 +182,8 @@ void MainWindow::setFolder()
         pitem->setName(str);
         pitem->setImage(inByteArray);
 
-
         pitem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
         Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
-
-//        my_query.bindValue(":name", str);
-//        my_query.bindValue(":path", "/home/andrew/book/"+str);
-//        my_query.bindValue(":img", inByteArray);
-//        //my_query.
-//        if (!my_query.exec())
-//        {
-//             qDebug() << sdb.lastError().text();
-//        }
     }
 
 }
@@ -236,12 +191,6 @@ void MainWindow::setFolder()
 void MainWindow::saveDb()
 {
     QString filename = QFileDialog::getSaveFileName();
-
-    //    sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
-    //    sdb->setDatabaseName("test");
-    //    if (!sdb->open()) {
-    //           //....
-    //    }
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");//not dbConnection
     db.setDatabaseName(filename);
     db.open();
@@ -280,10 +229,6 @@ void MainWindow::openDb()
 {
     QSqlQuery query;
     MyListWidgetItem* pitem;
-//    sdb->setDatabaseName("test");
-//    if (!sdb->open()) {
-//           //....
-//    }
 
     QString fileName = QFileDialog::getOpenFileName(this,
             tr("Open Address Book"), "");
