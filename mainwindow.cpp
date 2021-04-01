@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDir>
+#include <QFileDialog>
+#include <QStringRef>
 
 #include <QDebug>
 
@@ -29,6 +31,18 @@ public:
     void setId(int id) {
         this->id = id;
     }
+    QString getName() {
+        return name;
+    }
+    void setName(QString name) {
+        this->name = name;
+    }
+    QByteArray getImage() {
+        return inByteArray;
+    }
+    void setImage(QByteArray arr) {
+        inByteArray = arr;
+    }
     MyListWidgetItem(QListWidget *parent) :
       QListWidgetItem(parent)
     {
@@ -41,6 +55,8 @@ public:
 private:
   QString path;
   int id;
+  QString name;
+  QByteArray inByteArray;
 };
 Q_DECLARE_METATYPE( MyListWidgetItem )
 
@@ -50,92 +66,42 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
-    sdb->setDatabaseName("test");
-    if (!sdb->open()) {
-           //....
-    }
-    tbvCat = new QTableView();
-    modelCat = new QSqlQueryModel();
-    modelCat->setQuery("SELECT id, name "
-    "FROM Сategories "
-    );
+//    sdb->setDatabaseName("test");
+//    if (!sdb->open()) {
+//           //....
+//    }
+//    sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
+//    sdb->setDatabaseName("test");
+//    if (!sdb->open()) {
+//           //....
+//    }
+//    tbvCat = new QTableView();
+//    modelCat = new QSqlQueryModel();
+//    modelCat->setQuery("SELECT id, name "
+//    "FROM Сategories "
+//    );
 
-    if (modelCat->lastError().isValid()) {
-        qDebug() << modelCat->lastError();
-    }
+//    if (modelCat->lastError().isValid()) {
+//        qDebug() << modelCat->lastError();
+//    }
 
-    ui->tbvCat->setModel(modelCat);
-    ui->tbvCat->hideColumn(0);
-    ui->tbvCat->show();
+//    ui->tbvCat->setModel(modelCat);
+//    ui->tbvCat->hideColumn(0);
+//    ui->tbvCat->show();
 
-    QDir myDir("/home/andrew/book");
-    QStringList filesList = myDir.entryList(QStringList("*.djvu"));
-    ui->listWidget->setIconSize(QSize(300, 300));
-    MyListWidgetItem* pitem;
-    //lwg.setSelectionMode(QAbstractItemView::MultiSelection);
     ui->listWidget->setViewMode(QListView::IconMode);
-    QSqlQuery my_query, query;
-    my_query.prepare("INSERT INTO Books (Name, Path, Image)"
-                                  "VALUES (:name, :path, :img);");
-    /*foreach(QString str, filesList) {
-        document = new DJVU;
-        document->openDocument("/home/andrew/book/"+str);
-        QImage *img = document->getImage();
-        QByteArray inByteArray;
-        QBuffer inBuffer( &inByteArray );
-        inBuffer.open( QIODevice::WriteOnly );
-        auto p_map = QPixmap::fromImage(*img);
-        p_map.save( &inBuffer, "PNG" );
-
-        pitem = new QListWidgetItem("str", ui->listWidget);
-        pitem->setIcon(QPixmap::fromImage(*img));
-        pitem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
-        Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
-
-        my_query.bindValue(":name", str);
-        my_query.bindValue(":path", "/home/andrew/book/"+str);
-        my_query.bindValue(":img", inByteArray);
-        //my_query.
-        if (!my_query.exec())
-        {
-             qDebug() << sdb.lastError().text();
-        }
-    }*/
-
-    if( !query.exec( "SELECT id, Image, Path from Books" ))
-           qDebug() << "Error getting image from table:\n" << query.lastError();
-    while (query.next()) {
-        int id = query.value(0).toInt();
-        QByteArray outByteArray = query.value(1).toByteArray();
-        QString path = query.value(2).toString();
-
-        QPixmap outPixmap = QPixmap();
-        outPixmap.loadFromData( outByteArray );
-        pitem = new MyListWidgetItem("str", ui->listWidget);
-        pitem->setPath(path);
-        pitem->setId(id);
-        pitem->setIcon(outPixmap);
-        pitem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
-        Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
-    }
+    ui->listWidget->setIconSize(QSize(160,160));
 
 
-    document = new DJVU;
-    document->openDocument("test.djvu");
-    QImage *img = document->getImage();
-    //document->nextPage();
-    auto pixmap = QPixmap::fromImage(*img);
-    int width = ui->label->width();
-    int height = ui->label->height();
-    ui->label->setPixmap(pixmap.scaled(width, height, Qt::KeepAspectRatio));
 
-    //label->setPixmap(p.scaled(w,h,Qt::KeepAspectRatio));
-
-    connect(ui->pushButton,SIGNAL(clicked()),this,SLOT(next()));
-    connect(ui->pushButton_2, SIGNAL(clicked()), this, SLOT(copy()));
+    connect(ui->btnNextPage,SIGNAL(clicked()),this,SLOT(next()));
+    //connect(ui->pushButton_2, SIGNAL(clicked()), this, SLOT(copy()));
     connect(ui->listWidget, &QListWidget::itemClicked, this, &MainWindow::bookCoverClicked);
     connect(ui->btnAddCat, SIGNAL(clicked()), this, SLOT(addCat()));
     connect(ui->btnSetCat, SIGNAL(clicked()), this, SLOT(setCat()));
+    connect(ui->btnSetFolder, SIGNAL(clicked()), this, SLOT(setFolder()));
+    connect(ui->btnSaveDb, SIGNAL(clicked()), this, SLOT(saveDb()));
+    connect(ui->btnOpenDb, SIGNAL(clicked()), this, SLOT(openDb()));
 }
 
 MainWindow::~MainWindow()
@@ -150,16 +116,16 @@ void MainWindow::next()
     QImage *img = document->getImage();
     auto pixmap = QPixmap::fromImage(*img);
 
-    int width = ui->label->width();
-    int height = ui->label->height();
-    ui->label->setPixmap(pixmap.scaled(width, height, Qt::KeepAspectRatio));
+    //int width = ui->label->width();
+    //int height = ui->label->height();
+    ui->label->setScaledContents(true);
+    ui->label->setPixmap(pixmap);//.scaled(width, height, Qt::KeepAspectRatio));
 
 }
 
 void MainWindow::bookCoverClicked(QListWidgetItem *item)
 {
     MyListWidgetItem* pitem = dynamic_cast<MyListWidgetItem*>(item);
-    ui->label_2->setText(pitem->getPath());
 
     document = new DJVU;
     document->openDocument(pitem->getPath());
@@ -216,4 +182,131 @@ void MainWindow::setCat()
              qDebug() << sdb->lastError().text();
         }
     }
+}
+
+void MainWindow::setFolder()
+{
+
+    currentDir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                 "/home",
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
+    QDir myDir(currentDir);
+    QStringList filesList = myDir.entryList(QStringList("*.djvu"));
+    MyListWidgetItem* pitem;
+
+
+
+
+
+    foreach(QString str, filesList) {
+        document = new DJVU;
+        document->openDocument(currentDir + "/" + str);
+        QImage *img = document->getImage();
+        QByteArray inByteArray;
+        QBuffer inBuffer( &inByteArray );
+        inBuffer.open( QIODevice::WriteOnly );
+        auto p_map = QPixmap::fromImage(*img);
+        p_map.save( &inBuffer, "PNG" );
+
+
+        pitem = new MyListWidgetItem(str.mid(0, 10), ui->listWidget);
+
+        pitem->setIcon(QPixmap::fromImage(*img));
+        pitem->setPath(currentDir + "/" + str);
+        pitem->setName(str);
+        pitem->setImage(inByteArray);
+
+
+        pitem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
+        Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
+
+//        my_query.bindValue(":name", str);
+//        my_query.bindValue(":path", "/home/andrew/book/"+str);
+//        my_query.bindValue(":img", inByteArray);
+//        //my_query.
+//        if (!my_query.exec())
+//        {
+//             qDebug() << sdb.lastError().text();
+//        }
+    }
+
+}
+
+void MainWindow::saveDb()
+{
+    QString filename = QFileDialog::getSaveFileName();
+
+    //    sdb = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE"));
+    //    sdb->setDatabaseName("test");
+    //    if (!sdb->open()) {
+    //           //....
+    //    }
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");//not dbConnection
+    db.setDatabaseName(filename);
+    db.open();
+    QSqlQuery query;
+    query.exec("CREATE TABLE 'Books' "
+               "( `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, "
+               "`Name` TEXT, "
+               "`Path` TEXT, "
+               "`Image` BLOB, "
+               "`Importance` TEXT, "
+               "`Interest` TEXT, "
+               "`Comment` TEXT, "
+               "`ContentPage` INTEGER, "
+               "`InterestingPages` TEXT, "
+               "`SessionNumber` INTEGER )");
+
+    QSqlQuery my_query;
+    my_query.prepare("INSERT INTO Books (Name, Path, Image)"
+                                  "VALUES (:name, :path, :img);");
+
+    for (auto item : ui->listWidget->findItems("*", Qt::MatchWildcard)){
+        auto my_item = dynamic_cast<MyListWidgetItem*>(item);
+         my_query.bindValue(":name", my_item->getName());
+         my_query.bindValue(":path", my_item->getPath());
+         my_query.bindValue(":img", my_item->getImage());
+
+         if (!my_query.exec())
+         {
+              qDebug() << db.lastError().text();
+         }
+    }
+
+}
+
+void MainWindow::openDb()
+{
+    QSqlQuery query;
+    MyListWidgetItem* pitem;
+//    sdb->setDatabaseName("test");
+//    if (!sdb->open()) {
+//           //....
+//    }
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+            tr("Open Address Book"), "");
+
+    sdb->setDatabaseName(fileName);
+    if (!sdb->open()) {    }
+
+    if( !query.exec( "SELECT id, Name, Image, Path from Books" ))
+              qDebug() << "Error getting image from table:\n" << query.lastError();
+   while (query.next()) {
+       int id = query.value(0).toInt();
+       QString name = query.value(1).toString();
+       QByteArray outByteArray = query.value(2).toByteArray();
+       QString path = query.value(3).toString();
+
+       QPixmap outPixmap = QPixmap();
+       outPixmap.loadFromData( outByteArray );
+       pitem = new MyListWidgetItem(name.mid(0, 10), ui->listWidget);
+       pitem->setPath(path);
+       pitem->setId(id);
+       pitem->setIcon(outPixmap);
+       pitem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
+       Qt::ItemIsEditable | Qt::ItemIsDragEnabled);
+   }
+   sdb->close();
 }

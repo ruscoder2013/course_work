@@ -60,12 +60,16 @@ private:
     QSqlDatabase *sdb;
     QTableView *tbvCat;
     QSqlQueryModel* modelCat;
+    QString currentDir;
 public slots:
     void next();
     void bookCoverClicked(QListWidgetItem *item);
     void copy();
     void addCat();
     void setCat();
+    void setFolder();
+    void saveDb();
+    void openDb();
 };
 
 #endif // MAINWINDOW_H
